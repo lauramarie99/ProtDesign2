@@ -1,0 +1,20 @@
+diffusion:
+  type: "all-atom"
+  name: "Test_aa"
+  path: ""
+  contigs: ""
+  pdb: ""
+  iterations: 50
+  num_designs: 2
+  noise_scale: 1
+  substrate: "2PE"
+
+seqdesign:
+  num_seqs: 2
+  model_type: "ligand_mpnn"
+  seed: 111
+
+folding:
+  num_recycles: 3
+  num_models: 2
+  msa_mode: "single_sequence"
