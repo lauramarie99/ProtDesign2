@@ -1,5 +1,5 @@
 # Packages
-import subprocess, glob, os, argparse, config
+import subprocess, glob, os, argparse, config, yaml
 
 # Create a slurm script
 def create_slurm_script(repo_path, 
@@ -75,10 +75,15 @@ def run_all_slurm_scripts(slurm_path):
 
     
 # Start diffusion jobs, returns dictionary with job ids and dictionary with error messages   
-def run_diffusion(repo_path, config_path, out_path, container, diffusion_cmd):
+def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
     config_files = glob.glob(
         f'{config_path}/*.yml')
     for config_file in config_files:
+        args = yaml.safe_load(open(config_file))
+        if args["diffusion"]["type"] == "all-atom":
+            container = config.RFDIFFUSIONAA_CONTAINER
+        else:
+            container = config.RFDIFFUSION_CONTAINER
         name = config_file.split('/')[-1].split('.')[0]
         create_slurm_script(repo_path=repo_path, 
                             container=container,
@@ -138,7 +143,6 @@ os.makedirs(f"{out_path}/Folding", exist_ok=True)
 diffusion_job_ids, diffusion_errors = run_diffusion(repo_path=config.REPO_PATH, 
                                                     config_path=config_path,
                                                     out_path=f"{out_path}/Diffusion",
-                                                    container=config.DIFFUSION_CONTAINER,
                                                     diffusion_cmd="python3.9 diffuse.py")
 print("Diffusion jobs submitted")
 
