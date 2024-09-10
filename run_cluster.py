@@ -43,7 +43,7 @@ def create_slurm_script(repo_path,
                 '# define SCRIPT or program to call inside the container\n',
                 f'SCRIPT="{script} --config {config_file}"\n',
                 f'cd {repo_path}\n',
-                f'singularity exec --nv -B {config.COLABFOLDWEIGHTS}:/cache --cleanenv $CONTAINER $SCRIPT\n'      
+                f'singularity exec --nv -B {config.COLABFOLD_WEIGHTS}:/cache --cleanenv $CONTAINER $SCRIPT\n'      
         ])
 
 # Run single slurm script, returns job id and error message
