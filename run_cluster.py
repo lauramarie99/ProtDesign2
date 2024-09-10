@@ -101,7 +101,7 @@ def run_diffusion(repo_path, config_path, out_path, container, diffusion_cmd):
 def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage):
     for name,job_id in dep_job_ids.items():
         config_file = f"{config_path}/{name}.yml"
-        create_slurm_script(colabdesign_path=repo_path, 
+        create_slurm_script(repo_path=repo_path, 
                             container=container,
                             config_file=config_file, 
                             script=cmd, 
