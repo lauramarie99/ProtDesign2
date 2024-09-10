@@ -172,9 +172,9 @@ for k,v in args_diffusion.items():
 
 # Run diffusion
 if args_diffusion["type"] == "all-atom":
-     contigs, copies = run_diffusion_aa(**args_diffusion)
+    run_diffusion_aa(**args_diffusion)
 else:
-    contigs, copies = run_diffusion(**args_diffusion)
+    run_diffusion(**args_diffusion)
 
 # Copy config file to results directory
 os.system(f"cp {config_file} {path}/{name}")
