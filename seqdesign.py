@@ -1,10 +1,11 @@
 import utils, glob, yaml, argparse, json, os, config
 
+# Creates a json file given a dictionary
 def create_json(outpath, dict):
     with open(outpath, 'w') as file:
         json.dump(dict, file)
 
-
+# Creates the json input files for sequence design
 def create_input_files(path, name, contig_str, outdir):
     pdb_files = glob.glob(f"{path}/{name}*.pdb")
     pdb_dict = {path: "" for path in pdb_files}
@@ -25,12 +26,11 @@ def create_input_files(path, name, contig_str, outdir):
         fixed_resi_str = " ".join(fixed_resi)
         resi_dict = {path: fixed_resi_str for path in pdb_files}
     
-
     os.makedirs(outdir, exist_ok=True)
     create_json(f"{outdir}/pdb_ids.json", pdb_dict)
     create_json(f"{outdir}/fix_residues_multi.json", resi_dict)
 
-
+# Postprocessing of fasta files
 def postprocessing(outdir, name):
     fasta_seq = []
     for file in glob.glob(f"{outdir}/*.fa"):
@@ -46,7 +46,11 @@ def postprocessing(outdir, name):
     with open(f"{outdir}/{name}.fa", "w") as outfile:
         outfile.writelines(fasta_seq)
 
+"""
+MAIN
+"""
 
+# Read given config
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=str, required=True)
 args = parser.parse_args()
@@ -60,23 +64,24 @@ name = args["diffusion"]["name"]
 full_path = f"{path}/{name}"
 outdir = f"{full_path}/SeqDesign"
 
+# Create input files
 create_input_files(f"{full_path}/Diffusion", name, contigs_str, f"{outdir}/inputs")
 
+# Run sequence design
 opts = [f"--model_type {model_type}",
         f"--out_folder {outdir}/outputs",
         f"--batch_size {num_seqs}",
         f"--pdb_path_multi {outdir}/inputs/pdb_ids.json",
         f"--fixed_residues_multi {outdir}/inputs/fix_residues_multi.json",
         f"--zero_indexed 1"]
-
 if "seed" in args_seqdesign: opts.append(f"--seed {args_seqdesign['seed']}")
 if "temperature" in args_seqdesign: opts.append(f"--temperature {args_seqdesign['temperature']}")
-
 opts = ' '.join(opts)
 
-# Run sequence design (ProteinMPNN or LigandMPNN)
 print("running sequence design...")
 cmd = f"cd {config.LIGANDMPNN_PATH} && python3.9 run.py {opts}"
 print(cmd)
 utils.run(cmd)
+
+# Postprocessing of resulting fasta files
 postprocessing(f"{outdir}/outputs/seqs", name)

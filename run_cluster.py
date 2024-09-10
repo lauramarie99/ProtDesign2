@@ -1,4 +1,3 @@
-# Packages
 import subprocess, glob, os, argparse, config, yaml
 
 # Create a slurm script
@@ -9,15 +8,14 @@ def create_slurm_script(repo_path,
                         out_path, 
                         name, 
                         jobname, 
-                        time='24:00:00', 
-                        mem='10000', 
-                        cpus=1, 
-                        gpu='a30:1', 
-                        partition='paula', 
-                        email='', 
-                        emailType='FAIL', 
-                        excludeNodes='', 
-                        dependency=''):
+                        time, 
+                        mem, 
+                        cpus, 
+                        gpu, 
+                        partition,
+                        email,
+                        emailType,
+                        dependency=None):
     with open(f'{out_path}/{name}.slurm', 'w') as slurmFile:
         slurmFile.writelines([
                 "#!/bin/bash\n",
@@ -30,10 +28,9 @@ def create_slurm_script(repo_path,
                 f"#SBATCH --gres=gpu:{gpu}\n",
                 f"#SBATCH --partition={partition}\n",
                 f"#SBATCH --mail-user={email}\n",
-                f"#SBATCH --mail-type={emailType}\n",
-                f"#SBATCH --exclude={excludeNodes}\n"
+                f"#SBATCH --mail-type={emailType}\n"
         ])
-        if len(dependency) > 0:
+        if dependency:
             slurmFile.writelines([
                 f"#SBATCH --dependency=afterok:{dependency}\n"
             ])
@@ -76,15 +73,14 @@ def run_all_slurm_scripts(slurm_path):
     
 # Start diffusion jobs, returns dictionary with job ids and dictionary with error messages   
 def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
-    config_files = glob.glob(
-        f'{config_path}/*.yml')
+    config_files = glob.glob(f'{config_path}/*.yml')
     for config_file in config_files:
         args = yaml.safe_load(open(config_file))
         if args["diffusion"]["type"] == "all-atom":
             container = config.RFDIFFUSIONAA_CONTAINER
         else:
             container = config.RFDIFFUSION_CONTAINER
-        name = config_file.split('/')[-1].split('.')[0]
+        name = args["diffusion"]["name"]
         create_slurm_script(repo_path=repo_path, 
                             container=container,
                             config_file=config_file, 
@@ -97,7 +93,8 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
                             cpus=1, 
                             gpu=config.GPU, 
                             partition=config.PARTITION,
-                            email=config.EMAIL)
+                            email=config.EMAIL,
+                            emailType="FAIL")
     job_ids, errors = run_all_slurm_scripts(slurm_path=out_path)
     return job_ids, errors
 
@@ -119,6 +116,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             gpu=config.GPU,
                             partition=config.PARTITION, 
                             email=config.EMAIL,
+                            emailType="FAIL",
                             dependency=job_id)
     job_ids, errors = run_all_slurm_scripts(slurm_path=out_path)
     return job_ids, errors
@@ -140,6 +138,7 @@ out_path = f"{args.input}/Slurm"                                            # Lo
 os.makedirs(f"{out_path}/Diffusion", exist_ok=True)
 os.makedirs(f"{out_path}/SeqDesign", exist_ok=True)
 os.makedirs(f"{out_path}/Folding", exist_ok=True)
+
 diffusion_job_ids, diffusion_errors = run_diffusion(repo_path=config.REPO_PATH, 
                                                     config_path=config_path,
                                                     out_path=f"{out_path}/Diffusion",

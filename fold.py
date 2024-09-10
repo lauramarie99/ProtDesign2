@@ -1,5 +1,6 @@
 import utils, argparse, yaml, os, shutil
 
+# Postprocessing: Save resulting files for each diffused model in one separate directory
 def postprocessing(outdir):
    for filename in os.listdir(outdir):
         if filename.endswith(".done.txt") or filename.endswith(".a3m"):
@@ -13,6 +14,11 @@ def postprocessing(outdir):
             os.makedirs(os.path.join(outdir, id), exist_ok=True)
             shutil.move(os.path.join(outdir, filename), os.path.join(outdir, id))
 
+"""
+MAIN
+"""
+
+# Read given config
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=str, required=True)
 args = parser.parse_args()
@@ -27,16 +33,17 @@ full_path = f"{path}/{name}"
 outdir = f"{full_path}/Folding"
 input = f"{full_path}/SeqDesign/outputs/seqs/{name}.fa"
 
+# Run ColabFold
 opts = [f"--msa-mode {msa_mode}",
         f"--num-models {num_models}",
         f"--num-recycle {recycles}",
         f"{input} {outdir}"]
-
 opts = ' '.join(opts)
 
-# Run sequence design (ProteinMPNN or LigandMPNN)
 print("running ColabFold...")
 cmd = f"colabfold_batch {opts}"
 print(cmd)
 utils.run(cmd)
+
+# Postprocessing of resulting files
 postprocessing(outdir)
