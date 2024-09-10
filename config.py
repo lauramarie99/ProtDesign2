@@ -10,6 +10,7 @@ RFDIFFUSIONAA_CONTAINER = ""
 SEQDESIGN_CONTAINER = ""
 FOLDING_CONTAINER = ""
 EMAIL = ""                                  # Email for slurm notifications
+EMAIL_TYPE = "ALL"
 PARTITION = "paula"                         # Partition to use for runs
 GPU = "a30:1"                               # GPU to use
 COLABFOLD_WEIGHTS = ""                      # Path to colabfold weights
