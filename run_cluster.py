@@ -94,7 +94,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
                             gpu=config.GPU, 
                             partition=config.PARTITION,
                             email=config.EMAIL,
-                            emailType="FAIL")
+                            emailType=config.EMAIL_TYPE)
     job_ids, errors = run_all_slurm_scripts(slurm_path=out_path)
     return job_ids, errors
 
@@ -116,7 +116,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             gpu=config.GPU,
                             partition=config.PARTITION, 
                             email=config.EMAIL,
-                            emailType="FAIL",
+                            emailType=config.EMAIL_TYPE,
                             dependency=job_id)
     job_ids, errors = run_all_slurm_scripts(slurm_path=out_path)
     return job_ids, errors
