@@ -147,7 +147,7 @@ seqdesign_job_ids, seqdesign_errors = run_validation(repo_path=config.REPO_PATH,
                                                        out_path=f"{out_path}/SeqDesign",
                                                        dep_job_ids=diffusion_job_ids,
                                                        container=config.SEQDESIGN_CONTAINER,
-                                                       seqdesign_cmd="python3.9 seqdesign.py",
+                                                       cmd="python3.9 seqdesign.py",
                                                        stage="seqdesign")
 print("Seqdesign jobs submitted")
 
@@ -156,7 +156,7 @@ folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
                                                        out_path=f"{out_path}/Folding",
                                                        dep_job_ids=seqdesign_job_ids,
                                                        container=config.FOLDING_CONTAINER,
-                                                       seqdesign_cmd="python fold.py",
+                                                       cmd="python fold.py",
                                                        stage="folding")
 print("Colabfold jobs submitted")
 
