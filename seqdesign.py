@@ -70,7 +70,7 @@ create_input_files(f"{full_path}/Diffusion", name, contigs_str, f"{outdir}/input
 # Run sequence design
 opts = [f"--model_type {model_type}",
         f"--out_folder {outdir}/outputs",
-        f"--batch_size {num_seqs}",
+        f"--number_of_batches {num_seqs}",
         f"--pdb_path_multi {outdir}/inputs/pdb_ids.json",
         f"--fixed_residues_multi {outdir}/inputs/fix_residues_multi.json",
         f"--zero_indexed 1"]
