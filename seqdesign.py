@@ -76,6 +76,7 @@ opts = [f"--model_type {model_type}",
         f"--zero_indexed 1"]
 if "seed" in args_seqdesign: opts.append(f"--seed {args_seqdesign['seed']}")
 if "temperature" in args_seqdesign: opts.append(f"--temperature {args_seqdesign['temperature']}")
+if model_type == "protein_mpnn": opts.append(f"--ligand_mpnn_use_atom_context 0")
 opts = ' '.join(opts)
 
 print("running sequence design...")
