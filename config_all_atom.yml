@@ -1,18 +1,21 @@
 diffusion:
   type: "all-atom"
   name: "Test_aa"
-  path: ""
-  contigs: ""
-  pdb: ""
+  path: "./outputs"
+  contigs: "50-50/A130-130/45-45/A176-176/31-31/A208-208/50-50"
+  pdb: "input.pdb"
   iterations: 50
   num_designs: 2
   noise_scale: 1
   substrate: "2PE"
 
 seqdesign:
+  rmsd_cutoff: 1
   num_seqs: 2
   model_type: "ligand_mpnn"
-  seed: 111
+  relax_design_cycles: 2
+  params_file: "2PE.params"
+  cst_file: "constraints.cst"
 
 folding:
   num_recycles: 3
