@@ -12,7 +12,7 @@ def run_diffusion(type,
                   guide_scale=1,
                   guide_potentials="",
                   substrate="",
-                  ckpt_override_path="null",
+                  ckpt_override_path=None,
                   noise_scale=1,
                   deterministic=False,
                   partial_diffusion=False):
@@ -30,7 +30,7 @@ def run_diffusion(type,
     guide_scale (float): Scaling factor for guiding potentials. Defaults to 1.
     guide_potentials (str): The guiding potentials string. Defaults to an empty string.
     substrate (str): Substrate for the guiding potential. Defaults to "".
-    ckpt_override_path (str): The path of the checkpoint file. Defaults to "null".
+    ckpt_override_path (str, optional): The path of the checkpoint file. Defaults to None.
     noise_scale (int, optional): Change noise_scale_ca and noise_scale_frame. Defaults to 1.
     deterministic (bool, optional): Deterministic initialization. Defaults to False.
     partial_diffusion (bool, optional): Carry out partial_diffusion. Defaults to False.
@@ -47,7 +47,6 @@ def run_diffusion(type,
             f"inference.num_designs={num_designs}",
             f"denoiser.noise_scale_ca={noise_scale}",
             f"denoiser.noise_scale_frame={noise_scale}",
-            f"inference.ckpt_override_path={ckpt_override_path}",
             f"'contigmap.contigs=[{contigs}]'"]
 
     # Add enzyme_design related options if enzyme_design is True
@@ -71,6 +70,8 @@ def run_diffusion(type,
         pdb_filename = f"{full_path}/input.pdb"
         os.system(f"cp {pdb} {pdb_filename}")
         opts.append(f"inference.input_pdb={pdb_filename}")
+    if ckpt_override_path:
+        opts.append(f"inference.ckpt_override_path={ckpt_override_path}")
 
     # Print different parameters for diagnostic purposes
     print("output:", full_path)
