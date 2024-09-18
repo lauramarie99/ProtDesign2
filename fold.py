@@ -31,7 +31,7 @@ path = args["diffusion"]["path"]
 name = args["diffusion"]["name"]
 full_path = f"{path}/{name}"
 outdir = f"{full_path}/Folding"
-input = f"{full_path}/SeqDesign/outputs/seqs/{name}.fa"
+input = f"{full_path}/SeqDesign/{name}.fa"
 
 # Run ColabFold
 opts = [f"--msa-mode {msa_mode}",
