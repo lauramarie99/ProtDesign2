@@ -52,7 +52,7 @@ for n in range(args.num_contigs):
                 if resi in line:
                     new_line = new_line.replace(resi, model_motif[i])
             new_data.append(new_line)
-        with open(f"{args.outdir}/constraints_{n+1}.cst", "w") as outfile:
+        with open(f"{args.outdir}/{name}_{n+1}.cst", "w") as outfile:
             outfile.writelines(new_data)
 
         new_config_args["seqdesign"]["cst_file"] = f"{args.outdir}/constraints_{n+1}.cst"
