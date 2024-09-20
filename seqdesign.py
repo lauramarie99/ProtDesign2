@@ -9,56 +9,15 @@ def create_json(outpath, dict):
     with open(outpath, 'w') as file:
         json.dump(dict, file)
 
-# Filter pdbs based on Ca motif RMSD
-def filter_pdb(model_path, ref_path, model_motif, ref_motif, threshold):
-    ref_chain = ref_motif[0][0]
-    parser=PDBParser(QUIET=True)
-    model_structure = parser.get_structure('model', model_path)[0]['A']
-    ref_structure = parser.get_structure('ref', ref_path)[0][ref_chain]
-    ref_atoms = []
-    model_atoms = []
-    for resi in ref_motif:
-        ref_atom_list = [atom for atom in ref_structure[int(resi[1:])].get_atoms() if atom.get_id() == 'CA']
-        ref_atoms.extend(ref_atom_list)
-    for resi in model_motif:
-        model_atom_list = [atom for atom in model_structure[int(resi[1:])].get_atoms() if atom.get_id() == 'CA']
-        model_atoms.extend(model_atom_list)
-    super_imposer = Superimposer()
-    super_imposer.set_atoms(model_atoms, ref_atoms)
-    print(model_path, super_imposer.rms)
-    if super_imposer.rms <= threshold:
-        return True
-    return False
-
-
-# Get fixed motif from contig string
-def get_motifs(contig_str):
-    model_motif = []
-    ref_motif = []
-    index = 0
-    for block in contig_str.split("/"):
-        if block[0].isalpha():
-            lb = int(block.split("-")[0][1:])
-            ub = int(block.split("-")[1])
-            range = ub-lb+1
-            i = 0
-            while i < range:
-                index += 1
-                ref_motif.append(block[0] + str(lb+i))
-                model_motif.append(block[0] + str(index))
-                i += 1
-        else:
-            index = index + int(block.split("-")[0])
-    return model_motif, ref_motif
-
 
 # Filter PDB files and create the json input files for sequence design
 def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     pdb_files = glob.glob(f"{inpath}/{name}*.pdb")                                  # Get all pdb file paths
-    model_motif, ref_motif = get_motifs(contig_str)                                 # Get motifs
+    model_motif, ref_motif = utils.get_motifs(contig_str)                           # Get motifs
     filtered_pdb_files = []                                                         # Filter pdb files based on Motif Ca-RMSD
     for path in pdb_files:
-        if filter_pdb(model_path=path,ref_path=ref_path,model_motif=model_motif,ref_motif=ref_motif,threshold=threshold):
+        rmsd = utils.get_motif_ca_rmsd(model_path=path,ref_path=ref_path,model_motif=model_motif,ref_motif=ref_motif)
+        if rmsd <= threshold:
             filtered_pdb_files.append(path)
     print("Filtered PDB files: ", filtered_pdb_files)
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
@@ -82,7 +41,7 @@ def postprocessing(outpath, name, relax_round):
         save_lines = lines[2:]
         for i in range(0,len(save_lines)-1,2):
             id = save_lines[i].split(",")[0]
-            if "n" in id:
+            if relax_round > 0:
                 save_lines[i] = id + "\n"
             else:
                 save_lines[i] = id + "_n" + save_lines[i].split(",")[1][4:] + "_c" + str(relax_round) + "\n"
@@ -136,7 +95,7 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
     # Define scorefunction
     scorefxn = pyr.get_fa_scorefxn()                                                                    # Default full-atom energy terms
     scorefxn.set_weight(pyr.rosetta.core.scoring.score_type_from_name("atom_pair_constraint"), 1)       # Add constraint weight to score function    
-
+    scorefxn.set_weight(pyr.rosetta.core.scoring.score_type_from_name("coordinate_constraint"), 1)
     # Read input pdb file
     pose = pyr.pose_from_file(pdb)
     pose2 = pose.clone()
@@ -146,6 +105,7 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
         constraint_mover = pyr.rosetta.protocols.constraint_movers.ConstraintSetMover()
         constraint_mover.constraint_file(cst)
         constraint_mover.apply(pose2)
+
 
     # Specify task operations
     tf = pyr.rosetta.core.pack.task.TaskFactory()
@@ -174,13 +134,18 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
     mmf.add_chi_action(pyr.rosetta.core.select.movemap.mm_disable, no_repacking_selector)
     mmf.add_bb_action(pyr.rosetta.core.select.movemap.mm_disable, no_repacking_selector)
 
+    #mm = pyr.rosetta.core.kinematics.MoveMap()
+    #mm.set_jump(True)
+    #mm.set_chi(True)
+    #mm.set_bb(True)
+
     # Perform FastRelax
     fastRelax = pyr.rosetta.protocols.relax.FastRelax()
     fastRelax.constrain_relax_to_start_coords(True)
     fastRelax.set_scorefxn(scorefxn)
     fastRelax.set_movemap_factory(mmf)
+    #fastRelax.set_movemap(mm)
     fastRelax.set_task_factory(tf)
-    #fastRelax.constrain_coords(True)
     before = scorefxn.score(pose2)
     print(scorefxn.show(pose2))
     fastRelax.apply(pose2)
