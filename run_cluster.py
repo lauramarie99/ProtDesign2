@@ -102,7 +102,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
 # Start validation job if diffusion is done, returns dictionary with job ids and dictionary with error messages 
 def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage):
     for name,job_id in dep_job_ids.items():
-        config_file = f"{config_path}/*.yml"
+        config_file = f"{config_path}/{name}.yml"
         create_slurm_script(repo_path=repo_path, 
                             container=container,
                             config_file=config_file, 
