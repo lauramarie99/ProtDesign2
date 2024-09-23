@@ -89,7 +89,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
                             name=name,
                             jobname=f"diff-{name}", 
                             time="01:00:00", 
-                            mem="6000", 
+                            mem="4000", 
                             cpus=1, 
                             gpu=config.GPU, 
                             partition=config.PARTITION,
@@ -100,7 +100,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
 
 
 # Start validation job if diffusion is done, returns dictionary with job ids and dictionary with error messages 
-def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage):
+def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage, time):
     for name,job_id in dep_job_ids.items():
         config_file = f"{config_path}/{name}.yml"
         create_slurm_script(repo_path=repo_path, 
@@ -110,7 +110,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             out_path=out_path, 
                             name=name,
                             jobname=f"{stage}-{name}", 
-                            time="01:00:00", 
+                            time=time, 
                             mem="10000", 
                             cpus=1, 
                             gpu=config.GPU,
@@ -151,7 +151,8 @@ seqdesign_job_ids, seqdesign_errors = run_validation(repo_path=config.REPO_PATH,
                                                        dep_job_ids=diffusion_job_ids,
                                                        container=config.SEQDESIGN_CONTAINER,
                                                        cmd="python3.9 seqdesign.py",
-                                                       stage="seqdesign")
+                                                       stage="seqdesign",
+                                                       time="03:00:00")
 print("Seqdesign jobs submitted")
 
 folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
@@ -160,7 +161,8 @@ folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
                                                        dep_job_ids=seqdesign_job_ids,
                                                        container=config.FOLDING_CONTAINER,
                                                        cmd="python fold.py",
-                                                       stage="folding")
+                                                       stage="folding",
+                                                       time="01:00:00")
 print("Colabfold jobs submitted")
 
 
