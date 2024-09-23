@@ -36,6 +36,15 @@ def get_motifs(contig_str):
             index = index + int(block.split("-")[0])
     return model_motif, ref_motif
 
+# Get index of ligand residue
+def get_ligand_index(pdb_file, ligand):
+    parser=PDBParser(QUIET=True)
+    chain = parser.get_structure('model', pdb_file)[0]["B"]
+    for resi in chain.get_residues():
+        if resi.get_resname() == ligand:
+            return resi.get_id()[1]
+    return None         
+
 
 # Get Ca RMSD
 def get_ca_rmsd(model_path, ref_path):
