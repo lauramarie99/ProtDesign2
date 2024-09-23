@@ -196,9 +196,9 @@ def relax(pdb, id, outpath, model_motif, ref_motif, ligand, params=None, cst=Non
 # Call relax function
 def relax_pdb(pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, ligand):
     id = pdb.split("/")[-1].split("_packed")[0]
-    if "c" in id:
-        index = id.index("c")
-        design_id = id[:index+1] + str(relax_round) + id[index+2:]
+    if "_c" in id:
+        index = id.index("_c")
+        design_id = id[:index+2] + str(relax_round) + id[index+3:]
     else:
         design_id = id + "_n" + pdb.split("/")[-1].split("packed_")[1][:-6] + "_c" + str(relax_round)
     outpath = relax(pdb=pdb, 
