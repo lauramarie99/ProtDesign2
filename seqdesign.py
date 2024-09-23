@@ -27,7 +27,7 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     os.makedirs(outpath, exist_ok=True)
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
     create_json(f"{outpath}/fix_residues_multi.json", resi_dict)
-    return model_motif
+    return model_motif, ref_motif
 
 
 # Postprocessing of fasta files
@@ -55,7 +55,7 @@ def postprocessing(outpath, name, relax_round):
 # Sequence design
 def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
     # Preprocessing
-    model_motif = preprocessing(inpath=inpath, 
+    model_motif, ref_motif = preprocessing(inpath=inpath, 
                                 name=args_diffusion["name"], 
                                 contig_str=args_diffusion["contigs"], 
                                 outpath=f"{outpath}/inputs", 
@@ -82,11 +82,47 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
 
     # Postprocessing
     postprocessing(outpath=f"{outpath}/outputs/seqs", name=args_diffusion["name"], relax_round=relax_round)
-    return outpath, model_motif
+    return outpath, model_motif, ref_motif
+
+# Create specific cst file for input pdb
+def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outdir, name):
+    model_motif = [(resi[1:]+resi[0]) for resi in model_motif]
+    ref_motif = [(resi[1:]+resi[0]) for resi in ref_motif]
+    ligand_index = utils.get_ligand_index(pdb_file=pdb_file, ligand=ligand)
+    with open(old_cst_file) as infile:
+        data = infile.readlines()
+    new_data = []
+    for line in data:
+        new_line = line
+        blocks = line.split(" ")
+        block1 = blocks[2].strip()
+        block2 = blocks[4].strip()
+        for resi in [block1, block2]:
+            if resi in ref_motif:
+                index = ref_motif.index(resi)
+                new_line = new_line.replace(resi, model_motif[index])
+            else:
+                new_line = new_line.replace(resi, f"{ligand_index}B")
+        new_data.append(new_line)
+    filename = f"{outdir}/{name}.cst"
+    with open(filename, "w") as outfile:
+        outfile.writelines(new_data)
+    return filename
 
 
 # Rosetta FastRelax
-def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
+def relax(pdb, id, outpath, model_motif, ref_motif, ligand, params=None, cst=None):
+
+    # Create cst file
+    if cst is not None:
+        cst_file = create_cst_file(model_motif=model_motif, 
+                                   ref_motif=ref_motif, 
+                                   old_cst_file=cst, 
+                                   pdb_file=pdb,
+                                   ligand=ligand,
+                                   outdir=f"{outpath}/relaxed", 
+                                   name="constraints")
+
     # Initialization
     extra_res_fa = f"-extra_res_fa {params}" if params is not None else ""
     constraints = f"-constraints:cst_fa_file {cst}" if cst is not None else ""
@@ -103,7 +139,7 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
     # Add constraints
     if cst is not None:
         constraint_mover = pyr.rosetta.protocols.constraint_movers.ConstraintSetMover()
-        constraint_mover.constraint_file(cst)
+        constraint_mover.constraint_file(cst_file)
         constraint_mover.apply(pose2)
 
 
@@ -114,7 +150,7 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
     tf.push_back(pyr.rosetta.core.pack.task.operation.IncludeCurrent())                # Includes the current rotamers to the rotamers sets   
     tf.push_back(pyr.rosetta.core.pack.task.operation.NoRepackDisulfides())            # Prevent repacking of disulfid bond side-chains   
     residue_selector = pyr.rosetta.core.select.residue_selector.ResidueIndexSelector() # Prevent repacking of catalytic residues 
-    for resi in fixed_resi:
+    for resi in model_motif:
         residue = int(resi[1:].strip())
         residue_selector.append_index(residue)
     residue_selector.apply(pose2)
@@ -158,7 +194,7 @@ def relax(pdb, id, outpath, fixed_resi, params=None, cst=None):
     return outpath
         
 # Call relax function
-def relax_pdb(pdb, relax_round, outpath, args_seqdesign, fixed_resi):
+def relax_pdb(pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, ligand):
     id = pdb.split("/")[-1].split("_packed")[0]
     if "c" in id:
         index = id.index("c")
@@ -170,26 +206,28 @@ def relax_pdb(pdb, relax_round, outpath, args_seqdesign, fixed_resi):
                     outpath=outpath, 
                     **({"params": args_seqdesign["params_file"]} if "params_file" in args_seqdesign else {}),
                     **({"cst": args_seqdesign["cst_file"]} if "cst_file" in args_seqdesign else {}),
-                    fixed_resi=fixed_resi)
+                    ligand=ligand,
+                    model_motif=model_motif,
+                    ref_motif=ref_motif)
 
 
 # Perform cycles of Rosetta FastRelax and Sequence Design
-def relax_and_design(inpath, outpath, args_seqdesign, args_diffusion, relax_round, fixed_resi):
+def relax_and_design(inpath, outpath, args_seqdesign, args_diffusion, relax_round, model_motif, ref_motif):
     pdb_files = glob.glob(f"{inpath}/*.pdb")                                                            # Extract all pdb files
     os.makedirs(os.path.join(outpath, "relaxed"), exist_ok=True)                                        # Create outdir
     
     # Relaxation (in batches)
     with ProcessPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(relax_pdb, pdb, relax_round, outpath, args_seqdesign, fixed_resi) for pdb in pdb_files]
+        futures = [executor.submit(relax_pdb, pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, args_diffusion["substrate"]) for pdb in pdb_files]
         for future in as_completed(futures):
             future.result()
 
     # Proceed with the design function after all relax calls are complete
-    outpath, model_motif = design(inpath=f"{outpath}/relaxed", 
-                                  outpath=outpath, 
-                                  args_seqdesign=args_seqdesign, 
-                                  args_diffusion=args_diffusion,
-                                  relax_round=relax_round)
+    outpath, model_motif, ref_motif = design(inpath=f"{outpath}/relaxed", 
+                                             outpath=outpath, 
+                                             args_seqdesign=args_seqdesign, 
+                                             args_diffusion=args_diffusion,
+                                             relax_round=relax_round)
     return outpath
 
 def concat_fasta_files(outpath, name):
@@ -223,7 +261,7 @@ def main():
     full_path = f"{args_diffusion['path']}/{args_diffusion['name']}"
 
     # Perform sequence design
-    outpath, model_motif = design(inpath=f"{full_path}/Diffusion",
+    outpath, model_motif, ref_motif = design(inpath=f"{full_path}/Diffusion",
                                 outpath=f"{full_path}/SeqDesign/Recycle-0",
                                 args_seqdesign=args_seqdesign,
                                 args_diffusion=args_diffusion,
@@ -238,7 +276,8 @@ def main():
                                     outpath=f"{full_path}/SeqDesign/Recycle-{str(relax_round)}",
                                     args_seqdesign=args_seqdesign, 
                                     args_diffusion=args_diffusion,
-                                    fixed_resi=model_motif,
+                                    model_motif=model_motif,
+                                    ref_motif=ref_motif,
                                     relax_round=relax_round)
             
     concat_fasta_files(outpath=f"{full_path}/SeqDesign", name=args_diffusion["name"])
