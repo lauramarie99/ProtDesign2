@@ -27,7 +27,8 @@ parser.add_argument('--outdir', type=str, required=True)
 args = parser.parse_args()
 with open(args.config, "r") as file:
     config_args = yaml.safe_load(file)
-name = args.config.split("/")[-1][:-4]
+
+name = config_args["diffusion"]["name"]
 
 general_contig = config_args["diffusion"]["contigs"]
 
@@ -55,7 +56,7 @@ for n in range(args.num_contigs):
         with open(f"{args.outdir}/{name}_{n+1}.cst", "w") as outfile:
             outfile.writelines(new_data)
 
-        new_config_args["seqdesign"]["cst_file"] = f"{args.outdir}/constraints_{n+1}.cst"
+        new_config_args["seqdesign"]["cst_file"] = f"{args.outdir}/{name}_{n+1}.cst"
 
     with open(f"{args.outdir}/{name}_{n+1}.yml", "w") as outfile:
         yaml.dump(new_config_args, outfile)
