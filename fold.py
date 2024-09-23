@@ -84,10 +84,10 @@ opts = [f"--msa-mode {msa_mode}",
         f"{input} {outdir}"]
 opts = ' '.join(opts)
 
-# print("running ColabFold...")
-# cmd = f"colabfold_batch {opts}"
-# print(cmd)
-# utils.run(cmd)
+print("running ColabFold...")
+cmd = f"colabfold_batch {opts}"
+print(cmd)
+utils.run(cmd)
 
 # Postprocessing of resulting files
 postprocessing(outdir=outdir, args_diffusion=args["diffusion"])
