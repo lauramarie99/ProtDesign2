@@ -100,7 +100,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
 
 
 # Start validation job if diffusion is done, returns dictionary with job ids and dictionary with error messages 
-def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage, time):
+def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd, stage, time, cpus):
     for name,job_id in dep_job_ids.items():
         config_file = f"{config_path}/{name}.yml"
         create_slurm_script(repo_path=repo_path, 
@@ -112,7 +112,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             jobname=f"{stage}-{name}", 
                             time=time, 
                             mem="10000", 
-                            cpus=1, 
+                            cpus=cpus, 
                             gpu=config.GPU,
                             partition=config.PARTITION, 
                             email=config.EMAIL,
@@ -152,7 +152,8 @@ seqdesign_job_ids, seqdesign_errors = run_validation(repo_path=config.REPO_PATH,
                                                        container=config.SEQDESIGN_CONTAINER,
                                                        cmd="python3.9 seqdesign.py",
                                                        stage="seqdesign",
-                                                       time="03:00:00")
+                                                       time="03:00:00",
+                                                       cpus=5)
 print("Seqdesign jobs submitted")
 
 folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
@@ -162,7 +163,8 @@ folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
                                                        container=config.FOLDING_CONTAINER,
                                                        cmd="python fold.py",
                                                        stage="folding",
-                                                       time="01:00:00")
+                                                       time="01:00:00",
+                                                       cpus=1)
 print("Colabfold jobs submitted")
 
 
