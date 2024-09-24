@@ -23,7 +23,7 @@ def get_scores(dir, design_id, ref_path, diff_path, model_motif, ref_motif):
 
 
 def create_score_file(outdir, args_diffusion):
-    model_motif_list, ref_motif_list = utils.get_motifs(args_diffusion["contigs"])
+    model_motif_list, ref_motif_list, redesigned_residues = utils.get_motifs(args_diffusion["contigs"])
     subfolders = [f for f in glob.glob(f"{outdir}/*") if os.path.isdir(f)]
     print(subfolders)
     combined_scores = {}

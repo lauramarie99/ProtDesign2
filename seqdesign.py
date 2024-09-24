@@ -13,7 +13,7 @@ def create_json(outpath, dict):
 # Filter PDB files and create the json input files for sequence design
 def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     pdb_files = glob.glob(f"{inpath}/{name}*.pdb")                                  # Get all pdb file paths
-    model_motif, ref_motif = utils.get_motifs(contig_str)                           # Get motifs
+    model_motif, ref_motif, redesigned_residues = utils.get_motifs(contig_str)      # Get motifs
     filtered_pdb_files = []                                                         # Filter pdb files based on Motif Ca-RMSD
     for path in pdb_files:
         rmsd = utils.get_motif_ca_rmsd(model_path=path,ref_path=ref_path,model_motif=model_motif,ref_motif=ref_motif)
@@ -22,10 +22,13 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     print("Filtered PDB files: ", filtered_pdb_files)
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
     fixed_resi_str = " ".join(model_motif)
-    resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
+    fixed_resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
+    redesigned_resi_str = " ".join(redesigned_residues)
+    redesigned_resi_dict = {path: redesigned_resi_str for path in filtered_pdb_files}
     os.makedirs(outpath, exist_ok=True)
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
-    create_json(f"{outpath}/fix_residues_multi.json", resi_dict)
+    create_json(f"{outpath}/fix_residues_multi.json", fixed_resi_dict)
+    create_json(f"{outpath}/redesigned_residues_multi.json", redesigned_resi_dict)
     return model_motif, ref_motif
 
 
@@ -67,6 +70,7 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
             f"--number_of_batches {args_seqdesign['num_seqs']}",
             f"--pdb_path_multi {outpath}/inputs/pdb_ids.json",
             f"--fixed_residues_multi {outpath}/inputs/fix_residues_multi.json",
+            f"--redesigned_residues_multi {outpath}/inputs/redesigned_residues_multi.json",
             f"--zero_indexed 1",
             "--pack_side_chains 1",
             "--number_of_packs_per_design 1"]

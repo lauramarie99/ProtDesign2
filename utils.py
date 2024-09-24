@@ -20,21 +20,25 @@ def run(command):
 def get_motifs(contig_str):
     model_motif = []
     ref_motif = []
-    index = 0
+    all_residues = []
+    idx = 0
     for block in contig_str.split("/"):
         if block[0].isalpha():
             lb = int(block.split("-")[0][1:])
             ub = int(block.split("-")[1])
-            range = ub-lb+1
+            diff = ub-lb+1
             i = 0
-            while i < range:
-                index += 1
+            while i < diff:
+                idx += 1
                 ref_motif.append(block[0] + str(lb+i))
-                model_motif.append(block[0] + str(index))
+                model_motif.append(block[0] + str(idx))
                 i += 1
         else:
-            index = index + int(block.split("-")[0])
-    return model_motif, ref_motif
+            idx = idx + int(block.split("-")[0])
+    for i in range(idx):
+        all_residues.append(f"A{i+1}")
+    redesigned_residues = list(set(all_residues) - set(model_motif))
+    return model_motif, ref_motif, redesigned_residues
 
 # Get index of ligand residue
 def get_ligand_index(pdb_file, ligand):
