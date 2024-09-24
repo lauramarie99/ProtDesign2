@@ -78,7 +78,7 @@ For the diffusion and validation (ProteinMPNN + AF) steps, only one single confi
 - guide_scale: Scale factor for guide potential (only used if enzyme_design = true)
 - substrate: Substrate name (only used if enzyme_design = true OR type = all-atom)
 - iterations: Number of RFdiffusion steps
-- name: Experiment name
+- name: Experiment name (don't use "_" in the name)
 - noise scale: RFdiffusion noise scale
 - num_designs: Number of designs to generate
 - path: Directory where to store results
@@ -118,3 +118,6 @@ singularity exec --nv -B /home/iwe28/ProteinFolding:/cache /media/data/Container
 ## Large scale studies
 For generation of many config files based on a general config file, the script create_configs.py in the folder configs can be used.
 To automatically generate slurm scripts and submit the jobs, the script run_cluster.py can be used.
+
+## Notes
+- Currently the pipeline does not work for RFdiffusion in combination with RosettaFastRelax. Always use RFdiffusion all-atom if relax_design_cycles > 0
