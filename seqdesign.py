@@ -24,6 +24,7 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     fixed_resi_str = " ".join(model_motif)
     resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
     
+    print(outpath)
     os.makedirs(outpath, exist_ok=True)
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
     create_json(f"{outpath}/fix_residues_multi.json", resi_dict)
@@ -56,11 +57,11 @@ def postprocessing(outpath, name, relax_round):
 def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
     # Preprocessing
     model_motif, ref_motif = preprocessing(inpath=inpath, 
-                                name=args_diffusion["name"], 
-                                contig_str=args_diffusion["contigs"], 
-                                outpath=f"{outpath}/inputs", 
-                                ref_path=args_diffusion["pdb"], 
-                                threshold=int(args_seqdesign["rmsd_cutoff"]))
+                                           name=args_diffusion["name"], 
+                                           contig_str=args_diffusion["contigs"], 
+                                           outpath=f"{outpath}/inputs", 
+                                           ref_path=args_diffusion["pdb"], 
+                                           threshold=int(args_seqdesign["rmsd_cutoff"]))
 
     # Run sequence design
     opts = [f"--model_type {args_seqdesign['model_type']}",
