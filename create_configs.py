@@ -10,11 +10,11 @@ def create_random_contig(contig):
         else:
             lb = int(section.split('-')[0])
             ub = int(section.split('-')[1])
-        if lb != ub:
-            random_number = random.randint(lb,ub)
-            new_contig_sections.append(str(random_number) + "-" + str(random_number))
-        else:
-            new_contig_sections.append(str(lb) + "-" + str(lb))
+            if lb != ub:
+                random_number = random.randint(lb,ub)
+                new_contig_sections.append(str(random_number) + "-" + str(random_number))
+            else:
+                new_contig_sections.append(str(lb) + "-" + str(lb))
     new_contig = '/'.join(new_contig_sections)
     return new_contig
 
