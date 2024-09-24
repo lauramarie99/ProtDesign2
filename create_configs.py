@@ -38,7 +38,7 @@ for n in range(args.num_contigs):
     new_config_args["diffusion"]["contigs"] = new_contig
     new_config_args["diffusion"]["name"] = f"{config_args['diffusion']['name']}{n+1}"
 
-    with open(f"{args.outdir}/{name}_{n+1}.yml", "w") as outfile:
+    with open(f"{args.outdir}/{name}{n+1}.yml", "w") as outfile:
         yaml.dump(new_config_args, outfile)
 
 
