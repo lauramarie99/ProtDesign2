@@ -111,7 +111,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             name=name,
                             jobname=f"{stage}-{name}", 
                             time=time, 
-                            mem="10000", 
+                            mem="5000", 
                             cpus=cpus, 
                             gpu=config.GPU,
                             partition=config.PARTITION, 
@@ -146,25 +146,25 @@ diffusion_job_ids, diffusion_errors = run_diffusion(repo_path=config.REPO_PATH,
 print("Diffusion jobs submitted")
 
 seqdesign_job_ids, seqdesign_errors = run_validation(repo_path=config.REPO_PATH,
-                                                       config_path=config_path,
-                                                       out_path=f"{out_path}/SeqDesign",
-                                                       dep_job_ids=diffusion_job_ids,
-                                                       container=config.SEQDESIGN_CONTAINER,
-                                                       cmd="python3.9 seqdesign.py",
-                                                       stage="seqdesign",
-                                                       time="03:00:00",
-                                                       cpus=5)
+                                                     config_path=config_path,
+                                                     out_path=f"{out_path}/SeqDesign",
+                                                     dep_job_ids=diffusion_job_ids,
+                                                     container=config.SEQDESIGN_CONTAINER,
+                                                     cmd="python3.9 seqdesign.py",
+                                                     stage="seqdesign",
+                                                     time="03:00:00",
+                                                     cpus=9)
 print("Seqdesign jobs submitted")
 
 folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
-                                                       config_path=config_path,
-                                                       out_path=f"{out_path}/Folding",
-                                                       dep_job_ids=seqdesign_job_ids,
-                                                       container=config.FOLDING_CONTAINER,
-                                                       cmd="python fold.py",
-                                                       stage="folding",
-                                                       time="01:00:00",
-                                                       cpus=1)
+                                                 config_path=config_path,
+                                                 out_path=f"{out_path}/Folding",
+                                                 dep_job_ids=seqdesign_job_ids,
+                                                 container=config.FOLDING_CONTAINER,
+                                                 cmd="python fold.py",
+                                                 stage="folding",
+                                                 time="00:45:00",
+                                                 cpus=1)
 print("Colabfold jobs submitted")
 
 
