@@ -90,7 +90,7 @@ def run_diffusion(repo_path, config_path, out_path, diffusion_cmd):
                             jobname=f"diff-{name}", 
                             time="01:00:00", 
                             mem="4000", 
-                            cpus=1, 
+                            cpus=2, 
                             gpu=config.GPU, 
                             partition=config.PARTITION,
                             email=config.EMAIL,
@@ -111,7 +111,7 @@ def run_validation(repo_path, config_path, out_path, dep_job_ids, container, cmd
                             name=name,
                             jobname=f"{stage}-{name}", 
                             time=time, 
-                            mem="5000", 
+                            mem="8000", 
                             cpus=cpus, 
                             gpu=config.GPU,
                             partition=config.PARTITION, 
@@ -164,7 +164,7 @@ folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
                                                  cmd="python fold.py",
                                                  stage="folding",
                                                  time="01:00:00",
-                                                 cpus=1)
+                                                 cpus=2)
 print("Colabfold jobs submitted")
 
 
