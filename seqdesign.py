@@ -23,8 +23,6 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
     fixed_resi_str = " ".join(model_motif)
     resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
-    
-    print(outpath)
     os.makedirs(outpath, exist_ok=True)
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
     create_json(f"{outpath}/fix_residues_multi.json", resi_dict)
@@ -218,7 +216,7 @@ def relax_and_design(inpath, outpath, args_seqdesign, args_diffusion, relax_roun
     os.makedirs(os.path.join(outpath, "relaxed"), exist_ok=True)                                        # Create outdir
     
     # Relaxation (in batches)
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    with ProcessPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(relax_pdb, pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, args_diffusion["substrate"]) for pdb in pdb_files]
         for future in as_completed(futures):
             future.result()
