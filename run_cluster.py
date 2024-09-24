@@ -157,14 +157,14 @@ seqdesign_job_ids, seqdesign_errors = run_validation(repo_path=config.REPO_PATH,
 print("Seqdesign jobs submitted")
 
 folding_job_ids, folding_errors = run_validation(repo_path=config.REPO_PATH,
-                                                       config_path=config_path,
-                                                       out_path=f"{out_path}/Folding",
-                                                       dep_job_ids=seqdesign_job_ids,
-                                                       container=config.FOLDING_CONTAINER,
-                                                       cmd="python fold.py",
-                                                       stage="folding",
-                                                       time="01:00:00",
-                                                       cpus=1)
+                                                 config_path=config_path,
+                                                 out_path=f"{out_path}/Folding",
+                                                 dep_job_ids=seqdesign_job_ids,
+                                                 container=config.FOLDING_CONTAINER,
+                                                 cmd="python fold.py",
+                                                 stage="folding",
+                                                 time="01:00:00",
+                                                 cpus=1)
 print("Colabfold jobs submitted")
 
 
