@@ -50,6 +50,7 @@ RUN pip install -q -U --no-cache-dir \
     typing_extensions==4.10.0 \
     ml-collections==0.1.1 \
     dm-tree==0.1.8 \
-    pyrosetta-installer==0.1.1
+    pyrosetta-installer==0.1.1 \
+    pdb2pqr==3.6.2
 
 RUN python3.9 -c 'import pyrosetta_installer; pyrosetta_installer.install_pyrosetta()'

@@ -87,6 +87,14 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
     postprocessing(outpath=f"{outpath}/outputs/seqs", name=args_diffusion["name"], relax_round=relax_round)
     return outpath, model_motif, ref_motif
 
+# Protonation
+def protonate(pdb_file):
+    name = pdb_file[:-4]
+    cmd = f"pdb2pqr --keep-chain --ff=AMBER --pdb-output {name}_prot.pdb {pdb_file} {name}_pqr.pdb"
+    print(cmd)
+    utils.run(cmd)
+    return f"{name}_prot.pdb"
+
 # Create specific cst file for input pdb
 def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outdir, name):
     model_motif = [(resi[1:]+resi[0]) for resi in model_motif]
@@ -204,7 +212,8 @@ def relax_pdb(pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif,
         design_id = id[:index+2] + str(relax_round) + id[index+3:]
     else:
         design_id = id + "_n" + pdb.split("/")[-1].split("packed_")[1][:-6] + "_c" + str(relax_round)
-    outpath = relax(pdb=pdb, 
+    protonated_pdb_file = protonate(pdb_file=pdb)
+    outpath = relax(pdb=protonated_pdb_file, 
                     id=design_id, 
                     outpath=outpath, 
                     **({"params": args_seqdesign["params_file"]} if "params_file" in args_seqdesign else {}),
