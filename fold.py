@@ -10,11 +10,14 @@ def get_mean_plddt(dir, motif):
     mean_motif_plddt = round(mean(motif_plddt),2)
     return mean_plddt, mean_motif_plddt
 
-def get_scores(dir, design_id, ref_path, diff_path, model_motif, ref_motif):
+def get_scores(dir, design_id, ref_path, diff_path, model_motif, ref_motif, seq, contig_str):
     score_dict = {}
     model_motif_index_list = [int(resi[1:]) for resi in model_motif]
     model_path = glob.glob(f"{dir}/*rank_001*.pdb")[0]
     score_dict["id"] = design_id
+    score_dict["seq"] = seq
+    score_dict["contig_str"] = contig_str
+    score_dict["motif"] = model_motif
     score_dict["mean-plddt"],score_dict["mean-motif-plddt"] = get_mean_plddt(dir, model_motif_index_list)
     score_dict["ca-rmsd"] = utils.get_ca_rmsd(model_path=model_path, ref_path=diff_path)
     score_dict["motif-ca-rmsd"] = utils.get_motif_ca_rmsd(model_path=model_path, ref_path=ref_path, model_motif=model_motif, ref_motif=ref_motif)
@@ -22,7 +25,7 @@ def get_scores(dir, design_id, ref_path, diff_path, model_motif, ref_motif):
     return score_dict
 
 
-def create_score_file(outdir, args_diffusion):
+def create_score_file(outdir, args_diffusion, seq_dict):
     model_motif_list, ref_motif_list, redesigned_residues = utils.get_motifs(args_diffusion["contigs"])
     subfolders = [f for f in glob.glob(f"{outdir}/*") if os.path.isdir(f)]
     print(subfolders)
@@ -37,14 +40,15 @@ def create_score_file(outdir, args_diffusion):
                             ref_path=args_diffusion["pdb"], 
                             diff_path=diff_path, 
                             model_motif=model_motif_list, 
-                            ref_motif=ref_motif_list)
+                            ref_motif=ref_motif_list,
+                            seq = seq_dict[design_id],
+                            contig_str = args_diffusion["contigs"])
         combined_scores[design_id] = scores
-    print(combined_scores)
     with open(f"{outdir}/scores.json", "w") as output_file:
         json.dump(combined_scores, output_file, indent=4)
 
 # Postprocessing: Save resulting files for each diffused model in one separate directory
-def postprocessing(outdir, args_diffusion):
+def postprocessing(outdir, args_diffusion, seq_dict):
     for filename in os.listdir(outdir):
         if filename.endswith(".done.txt") or filename.endswith(".a3m"):
             file_path = os.path.join(outdir, filename)
@@ -56,7 +60,7 @@ def postprocessing(outdir, args_diffusion):
             id = filename.split("_")[0] + "_" + filename.split("_")[1] + "_" + filename.split("_")[2] + "_" + filename.split("_")[3]
             os.makedirs(os.path.join(outdir, id), exist_ok=True)
             shutil.move(os.path.join(outdir, filename), os.path.join(outdir, id))
-    create_score_file(outdir=outdir, args_diffusion=args_diffusion)
+    create_score_file(outdir=outdir, args_diffusion=args_diffusion, seq_dict=seq_dict)
 
 """
 MAIN
@@ -90,4 +94,5 @@ print(cmd)
 utils.run(cmd)
 
 # Postprocessing of resulting files
-postprocessing(outdir=outdir, args_diffusion=args["diffusion"])
+seq_dict = utils.get_seq_from_fasta(input)
+postprocessing(outdir=outdir, args_diffusion=args["diffusion"], seq_dict=seq_dict)

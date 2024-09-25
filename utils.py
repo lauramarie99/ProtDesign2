@@ -1,5 +1,6 @@
 import subprocess
 from Bio.PDB import PDBParser, Superimposer
+from Bio import SeqIO
 
 # Key to sort atoms in pdb file
 def atom_sort_key(atom):
@@ -101,6 +102,12 @@ def get_motif_all_atom_rmsd(model_path, ref_path, model_motif, ref_motif):
     super_imposer.set_atoms(model_atoms, ref_atoms)
     return round(super_imposer.rms, 2)
 
+# Get sequence from pdb_file
+def get_seq_from_fasta(fasta_file):
+    seq_dict = {}
+    for record in SeqIO.parse(fasta_file, "fasta"):
+        seq_dict[record.id] = str(record.seq)
+    return seq_dict
 
 
 
