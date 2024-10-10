@@ -109,11 +109,13 @@ def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outd
         block1 = blocks[2].strip()
         block2 = blocks[4].strip()
         for resi in [block1, block2]:
+            start = new_line.find(resi)
+            stop = start + len(resi) -1
             if resi in ref_motif:
                 index = ref_motif.index(resi)
-                new_line = new_line.replace(resi, model_motif[index])
+                new_line = new_line[:start] + model_motif[index] + new_line[stop+1:]
             else:
-                new_line = new_line.replace(resi, f"{ligand_index}B")
+                new_line = new_line[:start] + f"{ligand_index}B" + new_line[stop+1:]
         new_data.append(new_line)
     filename = f"{outdir}/{name}.cst"
     with open(filename, "w") as outfile:
