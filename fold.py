@@ -10,23 +10,23 @@ def get_mean_plddt(dir, motif):
     mean_motif_plddt = round(mean(motif_plddt),2)
     return mean_plddt, mean_motif_plddt
 
-def get_scores(dir, design_id, ref_path, diff_path, model_motif, ref_motif, seq, contig_str):
+def get_scores(dir, design_id, ref_path, diff_path, design_motif, ref_motif, seq, contig_str):
     score_dict = {}
-    model_motif_index_list = [int(resi[1:]) for resi in model_motif]
-    model_path = glob.glob(f"{dir}/*rank_001*.pdb")[0]
+    design_motif_index_list = [int(resi[1:]) for resi in design_motif]
+    design_path = glob.glob(f"{dir}/*rank_001*.pdb")[0]
     score_dict["id"] = design_id
     score_dict["seq"] = seq
     score_dict["contig_str"] = contig_str
-    score_dict["motif"] = model_motif
-    score_dict["mean-plddt"],score_dict["mean-motif-plddt"] = get_mean_plddt(dir, model_motif_index_list)
-    score_dict["ca-rmsd"] = utils.get_ca_rmsd(model_path=model_path, ref_path=diff_path)
-    score_dict["motif-ca-rmsd"] = utils.get_motif_ca_rmsd(model_path=model_path, ref_path=ref_path, model_motif=model_motif, ref_motif=ref_motif)
-    score_dict["motif-all-atom-rmsd"] = utils.get_motif_all_atom_rmsd(model_path=model_path, ref_path=ref_path, model_motif=model_motif, ref_motif=ref_motif)
+    score_dict["motif"] = design_motif
+    score_dict["mean-plddt"],score_dict["mean-motif-plddt"] = get_mean_plddt(dir, design_motif_index_list)
+    score_dict["ca-rmsd"] = utils.get_ca_rmsd(design_path=design_path, ref_path=diff_path)
+    score_dict["motif-ca-rmsd"] = utils.get_motif_ca_rmsd(design_path=design_path, ref_path=ref_path, design_motif=design_motif, ref_motif=ref_motif)
+    score_dict["motif-all-atom-rmsd"] = utils.get_motif_all_atom_rmsd(design_path=design_path, ref_path=ref_path, design_motif=design_motif, ref_motif=ref_motif)
     return score_dict
 
 
 def create_score_file(outdir, args_diffusion, seq_dict):
-    model_motif_list, ref_motif_list, redesigned_residues = utils.get_motifs(args_diffusion["contigs"])
+    design_motif_list, ref_motif_list, redesigned_residues = utils.get_motifs(args_diffusion["contigs"])
     subfolders = [f for f in glob.glob(f"{outdir}/*") if os.path.isdir(f)]
     print(subfolders)
     combined_scores = {}
@@ -39,7 +39,7 @@ def create_score_file(outdir, args_diffusion, seq_dict):
                             design_id=design_id, 
                             ref_path=args_diffusion["pdb"], 
                             diff_path=diff_path, 
-                            model_motif=model_motif_list, 
+                            design_motif=design_motif_list, 
                             ref_motif=ref_motif_list,
                             seq = seq_dict[design_id],
                             contig_str = args_diffusion["contigs"])
@@ -94,5 +94,5 @@ print(cmd)
 utils.run(cmd)
 
 # Postprocessing of resulting files
-seq_dict = utils.get_seq_from_fasta(input)
+seq_dict = utils.get_seqs_from_fasta(input)
 postprocessing(outdir=outdir, args_diffusion=args["diffusion"], seq_dict=seq_dict)

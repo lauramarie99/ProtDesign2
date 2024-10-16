@@ -13,15 +13,15 @@ def create_json(outpath, dict):
 # Filter PDB files and create the json input files for sequence design
 def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     pdb_files = glob.glob(f"{inpath}/{name}*.pdb")                                  # Get all pdb file paths
-    model_motif, ref_motif, redesigned_residues = utils.get_motifs(contig_str)      # Get motifs
+    design_motif, ref_motif, redesigned_residues = utils.get_motifs(contig_str)      # Get motifs
     filtered_pdb_files = []                                                         # Filter pdb files based on Motif Ca-RMSD
     for path in pdb_files:
-        rmsd = utils.get_motif_ca_rmsd(model_path=path,ref_path=ref_path,model_motif=model_motif,ref_motif=ref_motif)
+        rmsd = utils.get_motif_ca_rmsd(design_path=path,ref_path=ref_path,design_motif=design_motif,ref_motif=ref_motif)
         if rmsd <= threshold:
             filtered_pdb_files.append(path)
     print("Filtered PDB files: ", filtered_pdb_files)
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
-    fixed_resi_str = " ".join(model_motif)
+    fixed_resi_str = " ".join(design_motif)
     fixed_resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
     redesigned_resi_str = " ".join(redesigned_residues)
     redesigned_resi_dict = {path: redesigned_resi_str for path in filtered_pdb_files}
@@ -29,7 +29,7 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
     create_json(f"{outpath}/fix_residues_multi.json", fixed_resi_dict)
     create_json(f"{outpath}/redesigned_residues_multi.json", redesigned_resi_dict)
-    return model_motif, ref_motif
+    return design_motif, ref_motif
 
 
 # Postprocessing of fasta files
@@ -57,12 +57,12 @@ def postprocessing(outpath, name, relax_round):
 # Sequence design
 def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
     # Preprocessing
-    model_motif, ref_motif = preprocessing(inpath=inpath, 
-                                           name=args_diffusion["name"], 
-                                           contig_str=args_diffusion["contigs"], 
-                                           outpath=f"{outpath}/inputs", 
-                                           ref_path=args_diffusion["pdb"], 
-                                           threshold=int(args_seqdesign["rmsd_cutoff"]))
+    design_motif, ref_motif = preprocessing(inpath=inpath, 
+                                            name=args_diffusion["name"], 
+                                            contig_str=args_diffusion["contigs"], 
+                                            outpath=f"{outpath}/inputs", 
+                                            ref_path=args_diffusion["pdb"], 
+                                            threshold=int(args_seqdesign["rmsd_cutoff"]))
 
     # Run sequence design
     opts = [f"--model_type {args_seqdesign['model_type']}",
@@ -73,8 +73,9 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
             f"--redesigned_residues_multi {outpath}/inputs/redesigned_residues_multi.json",
             f"--zero_indexed 1",
             "--pack_side_chains 1",
-            "--number_of_packs_per_design 1"]
-    if args_diffusion["type"] != "all-atom": opts.append("--repack_everything 1")
+            "--pack_with_ligand_context 1",
+            "--number_of_packs_per_design 1",
+            "--repack_everything 0"]
     if "seed" in args_seqdesign: opts.append(f"--seed {args_seqdesign['seed']}")
     if "temperature" in args_seqdesign: opts.append(f"--temperature {args_seqdesign['temperature']}")
     opts = ' '.join(opts)
@@ -85,7 +86,7 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
 
     # Postprocessing
     postprocessing(outpath=f"{outpath}/outputs/seqs", name=args_diffusion["name"], relax_round=relax_round)
-    return outpath, model_motif, ref_motif
+    return outpath, design_motif, ref_motif
 
 # Protonation
 def protonate(pdb_file):
@@ -96,8 +97,8 @@ def protonate(pdb_file):
     return f"{name}_prot.pdb"
 
 # Create specific cst file for input pdb
-def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outdir, name):
-    model_motif = [(resi[1:]+resi[0]) for resi in model_motif]
+def create_cst_file(design_motif, ref_motif, old_cst_file, pdb_file, ligand, outdir, name):
+    design_motif = [(resi[1:]+resi[0]) for resi in design_motif]
     ref_motif = [(resi[1:]+resi[0]) for resi in ref_motif]
     ligand_index = utils.get_ligand_index(pdb_file=pdb_file, ligand=ligand)
     with open(old_cst_file) as infile:
@@ -111,7 +112,7 @@ def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outd
         for resi in [resi1, resi2]:
             if resi in ref_motif:
                 index = ref_motif.index(resi)
-                new_resi = model_motif[index]
+                new_resi = design_motif[index]
             else:
                 new_resi = f"{ligand_index}B"
             new_resi_list.append(new_resi)
@@ -125,11 +126,11 @@ def create_cst_file(model_motif, ref_motif, old_cst_file, pdb_file, ligand, outd
 
 
 # Rosetta FastRelax
-def relax(pdb, id, outpath, model_motif, ref_motif, ligand, params=None, cst=None):
+def relax(pdb, id, outpath, design_motif, ref_motif, ligand, params=None, cst=None):
 
     # Create cst file
     if cst is not None:
-        cst_file = create_cst_file(model_motif=model_motif, 
+        cst_file = create_cst_file(design_motif=design_motif, 
                                    ref_motif=ref_motif, 
                                    old_cst_file=cst, 
                                    pdb_file=pdb,
@@ -164,7 +165,7 @@ def relax(pdb, id, outpath, model_motif, ref_motif, ligand, params=None, cst=Non
     tf.push_back(pyr.rosetta.core.pack.task.operation.IncludeCurrent())                # Includes the current rotamers to the rotamers sets   
     tf.push_back(pyr.rosetta.core.pack.task.operation.NoRepackDisulfides())            # Prevent repacking of disulfid bond side-chains   
     residue_selector = pyr.rosetta.core.select.residue_selector.ResidueIndexSelector() # Prevent repacking of catalytic residues 
-    for resi in model_motif:
+    for resi in design_motif:
         residue = int(resi[1:].strip())
         residue_selector.append_index(residue)
     residue_selector.apply(pose2)
@@ -208,7 +209,7 @@ def relax(pdb, id, outpath, model_motif, ref_motif, ligand, params=None, cst=Non
     return outpath
         
 # Call relax function
-def relax_pdb(pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, ligand):
+def relax_pdb(pdb, relax_round, outpath, args_seqdesign, design_motif, ref_motif, ligand):
     id = pdb.split("/")[-1].split("_packed")[0]
     if "_c" in id:
         index = id.index("_c")
@@ -222,23 +223,23 @@ def relax_pdb(pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif,
                     **({"params": args_seqdesign["params_file"]} if "params_file" in args_seqdesign else {}),
                     **({"cst": args_seqdesign["cst_file"]} if "cst_file" in args_seqdesign else {}),
                     ligand=ligand,
-                    model_motif=model_motif,
+                    design_motif=design_motif,
                     ref_motif=ref_motif)
 
 
 # Perform cycles of Rosetta FastRelax and Sequence Design
-def relax_and_design(inpath, outpath, args_seqdesign, args_diffusion, relax_round, model_motif, ref_motif):
+def relax_and_design(inpath, outpath, args_seqdesign, args_diffusion, relax_round, design_motif, ref_motif):
     pdb_files = glob.glob(f"{inpath}/*.pdb")                                                            # Extract all pdb files
     os.makedirs(os.path.join(outpath, "relaxed"), exist_ok=True)                                        # Create outdir
     
     # Relaxation (in batches)
     with ProcessPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(relax_pdb, pdb, relax_round, outpath, args_seqdesign, model_motif, ref_motif, args_diffusion["substrate"]) for pdb in pdb_files]
+        futures = [executor.submit(relax_pdb, pdb, relax_round, outpath, args_seqdesign, design_motif, ref_motif, args_diffusion["substrate"]) for pdb in pdb_files]
         for future in as_completed(futures):
             future.result()
 
     # Proceed with the design function after all relax calls are complete
-    outpath, model_motif, ref_motif = design(inpath=f"{outpath}/relaxed", 
+    outpath, design_motif, ref_motif = design(inpath=f"{outpath}/relaxed", 
                                              outpath=outpath, 
                                              args_seqdesign=args_seqdesign, 
                                              args_diffusion=args_diffusion,
@@ -276,7 +277,7 @@ def main():
     full_path = f"{args_diffusion['path']}/{args_diffusion['name']}"
 
     # Perform sequence design
-    outpath, model_motif, ref_motif = design(inpath=f"{full_path}/Diffusion",
+    outpath, design_motif, ref_motif = design(inpath=f"{full_path}/Diffusion",
                                 outpath=f"{full_path}/SeqDesign/Recycle-0",
                                 args_seqdesign=args_seqdesign,
                                 args_diffusion=args_diffusion,
@@ -291,7 +292,7 @@ def main():
                                     outpath=f"{full_path}/SeqDesign/Recycle-{str(relax_round)}",
                                     args_seqdesign=args_seqdesign, 
                                     args_diffusion=args_diffusion,
-                                    model_motif=model_motif,
+                                    design_motif=design_motif,
                                     ref_motif=ref_motif,
                                     relax_round=relax_round)
             

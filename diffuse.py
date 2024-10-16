@@ -1,4 +1,16 @@
-import random, string, os, yaml, argparse, utils, config
+import random, string, os, yaml, argparse, utils, config, glob
+
+
+def postprocessing(contigs, name, path, pdb, substrate):
+    full_path = f"{path}/{name}/Diffusion"
+    design_motif, ref_motif, redesigned_residues = utils.get_motifs(contigs)
+    ref_path = pdb
+    for design_path in glob.glob(f"{full_path}/{name}*.pdb"):
+        utils.add_sidechain_and_ligand_coordinates(design_path=design_path,
+                                                   ref_path=ref_path,
+                                                   design_motif=design_motif,
+                                                   ref_motif=ref_motif,
+                                                   ligand_name=substrate)
 
 # Run RFdiffusion
 def run_diffusion(type, 
@@ -82,7 +94,8 @@ def run_diffusion(type,
     cmd = f"cd {config.RFDIFFUSION_PATH} && python3.9 run_inference.py {opts_str}"
     print(cmd)
     utils.run(cmd)
-
+    if pdb:
+        postprocessing(contigs, name, path, pdb, substrate)
 
 # Run RFdiffusion all-atom
 def run_diffusion_aa(type, 
