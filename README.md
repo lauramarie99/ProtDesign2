@@ -120,4 +120,3 @@ For generation of many config files based on a general config file, the script c
 To automatically generate slurm scripts and submit the jobs, the script run_cluster.py can be used.
 
 ## Notes
-- Currently the pipeline does not work for RFdiffusion in combination with RosettaFastRelax. Always use RFdiffusion all-atom if relax_design_cycles > 0
