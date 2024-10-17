@@ -1,5 +1,6 @@
 # ProtDesign2
-ProteinDesign with RFdiffusion(all-atom) and ProteinMPNN/LigandMPNN/RosettaFastRelax
+Protein design with RFdiffusion(all-atom) and ProteinMPNN/LigandMPNN/RosettaFastRelax.\
+Create new proteins such as enzymes or small-molecule binders.
 
 ## Overview
 - diffuse.py: Diffusion (RFdiffusion/RFdiffusion all-atom)
@@ -120,3 +121,5 @@ For generation of many config files based on a general config file, the script c
 To automatically generate slurm scripts and submit the jobs, the script run_cluster.py can be used.
 
 ## Notes
+- Avoid chain breaks in the contig strings
+- This pipeline is not suitable for protein binder design
