@@ -73,25 +73,25 @@ For the diffusion and validation (ProteinMPNN + AF) steps, only one single confi
 ### Diffusion
 - type: "base" (RFdiffusion) or "all-atom" (RFdiffusion all-atom)
 - ckpt_override_path: Override RFdiffusion model path (e.g. Active_Site model)
-- contigs: Contig string (Specify always a range, e.g. 16-16 instead of 16!)
+- contigs: Contig string (specify always ranges, e.g. 16-16 instead of 16!)
 - enzyme_design: Set true if you want to use an external potential
 - guide_potentials: External potential to use (only used if enzyme_design = true)
 - guide_scale: Scale factor for guide potential (only used if enzyme_design = true)
-- substrate: Substrate name (only used if enzyme_design = true OR type = all-atom)
+- pdb: Input structure (the structure where the fixed residues are taken from)
+- substrate: Substrate name (contained in input pdb)
 - iterations: Number of RFdiffusion steps
-- name: Experiment name (don't use "_" in the name)
+- name: Experiment name (don't use special characters)
 - noise scale: RFdiffusion noise scale
 - num_designs: Number of designs to generate
 - path: Directory where to store results
-- pdb: Input structure (The structure where the fixed residues are taken from)
 
 ### Sequence Design
 - model_type: "protein_mpnn" or "ligand_mpnn"
 - num_seqs: Number of sequences to generate
 - rmsd_cutoff: Threshold for motif-Ca-RMSD
-- relax_design_cycles: Number of FastRelax+SeqDesign cycles, 0 will only carry out sequence design without relax
+- relax_design_cycles: Number of FastRelax+SeqDesign cycles, 0 will only carry out sequence design without FastRelax
 - params_file: Params file for Rosetta FastRelax
-- cst_file: Cst file for Rosetta FastRelax
+- cst_file: CST file for Rosetta FastRelax
 
 ### Folding
 - num_recycles: Number of AF2 recycles
