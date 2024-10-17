@@ -23,7 +23,10 @@ def get_motifs(contig_str):
     ref_motif = []
     all_residues = []
     idx = 0
-    for block in contig_str.split("/"):
+    for block in contig_str.split(" ")[0].split("/"):
+        if block == "0":
+            # Ignore chain breaks
+            continue
         if block[0].isalpha():
             lb = int(block.split("-")[0][1:])
             ub = int(block.split("-")[1])
@@ -132,7 +135,9 @@ def add_sidechain_coordinates(design_model, ref_model, design_resi, ref_resi):
 
 # Get ligand residue from model given the name of the ligand
 def get_ligand_residue(model, ligand_name):
+    print("Search for ligand: ", ligand_name)
     for chain in model:
+        print(chain.id)
         for residue in chain:
             if residue.resname == ligand_name:
                 print(f"Ligand {ligand_name} found in Chain {chain.id}, Residue {residue.id}")
@@ -170,6 +175,23 @@ def add_sidechain_and_ligand_coordinates(design_path, ref_path, design_motif, re
                                           ref_motif=ref_motif,
                                           ligand_name=ligand_name)
     io.set_structure(design_model)
+    io.save(design_path)
+
+# Remove chain from pdb file
+def remove_chain_from_pdb(design_path, chain_to_remove):
+    parser=PDBParser(QUIET=True)
+    design_model = parser.get_structure('design', design_path)[0]
+    new_model = design_model.copy()
+    for chain in list(new_model):  # Use list() to avoid modifying the structure while iterating
+        print(chain.id)
+        if chain.id == chain_to_remove:
+            print("Chain found")
+            new_model.detach_child(chain_to_remove)  # Remove the chain
+            break
+
+    # Save the new structure to a PDB file
+    io = PDBIO()
+    io.set_structure(new_model)
     io.save(design_path)
 
 # Get sequences from fasta_file

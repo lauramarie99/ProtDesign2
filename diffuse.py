@@ -1,11 +1,15 @@
 import random, string, os, yaml, argparse, utils, config, glob
 
-
+# Add ligand and sidechains of motif to designs
 def postprocessing(contigs, name, path, pdb, substrate):
     full_path = f"{path}/{name}/Diffusion"
     design_motif, ref_motif, redesigned_residues = utils.get_motifs(contigs)
     ref_path = pdb
     for design_path in glob.glob(f"{full_path}/{name}*.pdb"):
+        if "/0" in contigs:
+            # Remove second chain
+            utils.remove_chain_from_pdb(design_path=design_path,
+                                        chain_to_remove="B")
         utils.add_sidechain_and_ligand_coordinates(design_path=design_path,
                                                    ref_path=ref_path,
                                                    design_motif=design_motif,
@@ -94,7 +98,7 @@ def run_diffusion(type,
     cmd = f"cd {config.RFDIFFUSION_PATH} && python3.9 run_inference.py {opts_str}"
     print(cmd)
     utils.run(cmd)
-    if pdb:
+    if pdb and substrate:
         postprocessing(contigs, name, path, pdb, substrate)
 
 # Run RFdiffusion all-atom
