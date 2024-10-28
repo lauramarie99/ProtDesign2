@@ -1,6 +1,7 @@
 import subprocess, copy
 from Bio.PDB import PDBParser, Superimposer, PDBIO, Chain
 from Bio import SeqIO
+import numpy as np
 
 # Key to sort atoms in pdb file
 def atom_sort_key(atom):
@@ -112,10 +113,10 @@ def get_motif_all_atom_rmsd(design_path, ref_path, design_motif, ref_motif):
     design_model = parser.get_structure('design', design_path)[0]
     ref_model = parser.get_structure('ref', ref_path)[0]
     return superimpose_motif_all_atom(design_model=design_model,
-                               ref_model=ref_model,
-                               design_motif=design_motif,
-                               ref_motif=ref_motif,
-                               apply_change=False)
+                                      ref_model=ref_model,
+                                      design_motif=design_motif,
+                                      ref_motif=ref_motif,
+                                      apply_change=False)
 
 # Add sidechain coordinates for given residue using a reference structure
 def add_sidechain_coordinates(design_model, ref_model, design_resi, ref_resi):
@@ -144,6 +145,12 @@ def get_ligand_residue(model, ligand_name):
                 return residue
     print(f"Ligand {ligand_name} not found in the PDB file.")
     return None
+
+# Get ligand residue from model path given the name of the ligand
+def get_ligand_residue_from_path(path, ligand_name):
+    parser=PDBParser(QUIET=True)
+    model = parser.get_structure('structure', path)[0]
+    return get_ligand_residue(model=model, ligand_name=ligand_name)
 
 # Add coordinates of ligand to design
 def add_ligand_coordinates(design_model, ref_model, design_motif, ref_motif, ligand_name):
@@ -201,9 +208,44 @@ def get_seqs_from_fasta(fasta_file):
         seq_dict[record.id] = str(record.seq)
     return seq_dict
 
+# Returns distance from the protein C-alpha to the closest ligand atom
+def residue_dist_to_ligand(protein_residue, ligand_residue, atomtype='CA'):
+    dist = []
+    for atom in ligand_residue:
+        if atomtype in protein_residue:
+            vector  = protein_residue[atomtype].coord - atom.coord
+            dist.append(np.sqrt(np.sum(vector * vector)))
+    if len(dist) > 0:
+        return min(dist)
+    else:
+        return None
+    
+# Get protein atoms located within a given distance from ligand
+def get_close_protein_atoms(ligand, distance, model, atom_list):
+    close_atoms = []
+    chains = model.child_dict
+    for c in chains:
+        for protein_res in chains[c].child_list:
+            if not protein_res.resname == ligand.resname:
+                for atom in atom_list:
+                    dist = residue_dist_to_ligand(protein_res, ligand, atom)
+                    if dist and dist < distance :
+                        close_atoms.append((protein_res.resname, protein_res.id[1], atom, dist))
+    return close_atoms
+
+# Get Ca atoms located within a given distance from ligand
+def get_close_ca_atoms(ligand, distance, design_path):
+    parser=PDBParser(QUIET=True)
+    design_model = parser.get_structure('design', design_path)[0]
+    close_ca_atoms = get_close_protein_atoms(ligand=ligand, distance=distance, model=model, atom_list=["CA"])
+    return close_ca_atoms
 
 
-
-
+# Returns backbone atoms located within a given distance from ligand
+def get_close_backbone_atoms(ligand, distance, design_path):
+    parser=PDBParser(QUIET=True)
+    design_model = parser.get_structure('design', design_path)[0]
+    close_backbone_atoms = get_close_protein_atoms(ligand=ligand, distance=distance, model=design_model, atom_list=["CA","C","O","N"])
+    return close_backbone_atoms
 
 

@@ -1,6 +1,5 @@
 import utils, glob, yaml, argparse, json, os, config, time
 import pyrosetta as pyr
-from Bio.PDB import PDBParser, Superimposer
 from concurrent.futures import ProcessPoolExecutor, as_completed
 start = time.time()
 
@@ -11,13 +10,15 @@ def create_json(outpath, dict):
 
 
 # Filter PDB files and create the json input files for sequence design
-def preprocessing(inpath, name, outpath, contig_str, ref_path, threshold):
+def preprocessing(inpath, name, outpath, contig_str, ref_path, rmsd_threshold, ligand_name, clash_threshold):
     pdb_files = glob.glob(f"{inpath}/{name}*.pdb")                                  # Get all pdb file paths
     design_motif, ref_motif, redesigned_residues = utils.get_motifs(contig_str)      # Get motifs
     filtered_pdb_files = []                                                         # Filter pdb files based on Motif Ca-RMSD
     for path in pdb_files:
         rmsd = utils.get_motif_ca_rmsd(design_path=path,ref_path=ref_path,design_motif=design_motif,ref_motif=ref_motif)
-        if rmsd <= threshold:
+        ligand = utils.get_ligand_residue_from_path(path=path, ligand_name=ligand_name)
+        clashes = utils.get_close_backbone_atoms(ligand=ligand, distance=clash_threshold, design_path=path)
+        if rmsd <= rmsd_threshold and len(clashes)==0:
             filtered_pdb_files.append(path)
     print("Filtered PDB files: ", filtered_pdb_files)
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
@@ -62,7 +63,9 @@ def design(inpath, outpath, args_seqdesign, args_diffusion, relax_round):
                                             contig_str=args_diffusion["contigs"], 
                                             outpath=f"{outpath}/inputs", 
                                             ref_path=args_diffusion["pdb"], 
-                                            threshold=int(args_seqdesign["rmsd_cutoff"]))
+                                            rmsd_threshold=int(args_seqdesign["rmsd_cutoff"]),
+                                            ligand_name=args_diffusion["substrate"],
+                                            clash_threshold=int(args_seqdesign["clash_cutoff"]))
 
     # Run sequence design
     opts = [f"--model_type {args_seqdesign['model_type']}",
