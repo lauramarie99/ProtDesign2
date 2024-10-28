@@ -1,21 +1,22 @@
 diffusion:
   type: "all-atom"
-  name: "Test_aa"
-  path: "./outputs"
-  contigs: "50-50/A130-130/45-45/A176-176/31-31/A208-208/50-50"
-  pdb: "input.pdb"
-  iterations: 50
+  name: "Testaa"
+  path: "home/outputs"
+  contigs: "50-50/A130-136/20-20"
+  pdb: "home/input.pdb"
+  iterations: 100
   num_designs: 2
   noise_scale: 1
-  substrate: "2PE"
+  substrate: "J1K"
 
 seqdesign:
   rmsd_cutoff: 1
-  num_seqs: 2
-  model_type: "ligand_mpnn"
+  clash_cutoff: 2
+  num_seqs: 4
+  model_type: "protein_mpnn"
   relax_design_cycles: 2
-  params_file: "2PE.params"
-  cst_file: "constraints.cst"
+  params_file: "home/2PE.params"
+  cst_file: "home/constraints.cst"
 
 folding:
   num_recycles: 3
