@@ -78,7 +78,7 @@ For the diffusion and validation (ProteinMPNN + AF) steps, only one single confi
 - guide_potentials: External potential to use (only used if enzyme_design = true)
 - guide_scale: Scale factor for guide potential (only used if enzyme_design = true)
 - pdb: Input structure (the structure where the fixed residues are taken from)
-- substrate: Substrate name (contained in input pdb)
+- substrate: Substrate name (must be contained in input structure pdb)
 - iterations: Number of RFdiffusion steps
 - name: Experiment name (don't use special characters)
 - noise scale: RFdiffusion noise scale
@@ -86,12 +86,13 @@ For the diffusion and validation (ProteinMPNN + AF) steps, only one single confi
 - path: Directory where to store results
 
 ### Sequence Design
-- model_type: "protein_mpnn" or "ligand_mpnn"
+- model_type: Sequence design model (e.g. "protein_mpnn")
 - num_seqs: Number of sequences to generate
-- rmsd_cutoff: Threshold for motif-Ca-RMSD
+- rmsd_cutoff: Threshold for motif-Ca-RMSD (if a backbone has a motif-Ca-RMSD > rmsd_threshold, it will not be considered for sequence design)
+- clash_cutoff: Distance threshold for clashes (if a design has backbone atoms within the given distance, it will not be considered for sequence design)
 - relax_design_cycles: Number of FastRelax+SeqDesign cycles, 0 will only carry out sequence design without FastRelax
-- params_file: Params file for Rosetta FastRelax
-- cst_file: CST file for Rosetta FastRelax
+- params_file: Params file for Rosetta FastRelax (only used if relax_design_cycles > 0)
+- cst_file: CST file for Rosetta FastRelax (only used if relax_design_cycles > 0)
 
 ### Folding
 - num_recycles: Number of AF2 recycles
