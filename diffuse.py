@@ -180,19 +180,19 @@ args_diffusion = args["diffusion"]
 # Check if output directory already exists
 name = args_diffusion["name"]
 path = args_diffusion["path"]
-if os.path.exists(f"{path}/{name}/Diffusion/{name}_0.pdb"):
-  args_diffusion["name"] = name = args_diffusion["name"] + "_" + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
 
-# Get diffusion arguments
-for k,v in args_diffusion.items():
-  if isinstance(v,str):
-    args_diffusion[k] = v.replace("'","").replace('"','')
+if not os.path.exists(f"{path}/{name}/Diffusion/{name}_0.pdb"):
 
-# Run diffusion
-if args_diffusion["type"] == "all-atom":
-    run_diffusion_aa(**args_diffusion)
-else:
-    run_diffusion(**args_diffusion)
+    # Get diffusion arguments
+    for k,v in args_diffusion.items():
+        if isinstance(v,str):
+            args_diffusion[k] = v.replace("'","").replace('"','')
 
-# Copy config file to results directory
-os.system(f"cp {config_file} {path}/{name}")
+    # Run diffusion
+    if args_diffusion["type"] == "all-atom":
+        run_diffusion_aa(**args_diffusion)
+    else:
+        run_diffusion(**args_diffusion)
+
+    # Copy config file to results directory
+    os.system(f"cp {config_file} {path}/{name}")
