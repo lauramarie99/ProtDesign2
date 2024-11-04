@@ -22,9 +22,11 @@ def preprocessing(inpath, name, outpath, contig_str, ref_path, rmsd_threshold, l
             filtered_pdb_files.append(path)
     print("Filtered PDB files: ", filtered_pdb_files)
     pdb_dict = {path: "" for path in filtered_pdb_files}                            # Create dictionaries with paths and motif
-    fixed_resi_str = " ".join(design_motif)
+    #fixed_resi_str = " ".join(design_motif)
+    fixed_resi_str = design_motif
     fixed_resi_dict = {path: fixed_resi_str for path in filtered_pdb_files}
-    redesigned_resi_str = " ".join(redesigned_residues)
+    #redesigned_resi_str = " ".join(redesigned_residues)
+    redesigned_resi_str = redesigned_residues
     redesigned_resi_dict = {path: redesigned_resi_str for path in filtered_pdb_files}
     os.makedirs(outpath, exist_ok=True)
     create_json(f"{outpath}/pdb_ids.json", pdb_dict)                                # Create json input files
