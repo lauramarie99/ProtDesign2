@@ -88,11 +88,11 @@ def get_motif_ca_rmsd(design_path, ref_path, design_motif, ref_motif):
 def superimpose_motif_all_atom(design_model, ref_model, design_motif, ref_motif, apply_change):
     ref_chain = ref_motif[0][0]
     design_structure = design_model['A']
-    ref_structure = ref_model[ref_chain]
     ref_atoms = []
     design_atoms = []
     for resi in ref_motif:
-        ref_atom_list = [atom for atom in ref_structure[int(resi[1:])].get_atoms() if atom.element != 'H']
+        ref_chain = resi[0]
+        ref_atom_list = [atom for atom in ref_model[ref_chain][int(resi[1:])].get_atoms() if atom.element != 'H']
         ref_atom_list.sort(key=atom_sort_key)
         ref_atoms.extend(ref_atom_list)
     for resi in design_motif:
