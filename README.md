@@ -102,9 +102,9 @@ For the diffusion and validation (ProteinMPNN + AF) steps, only one single confi
 ### Run diffusion
 ```
 # RFdiffusion
-singularity exec --nv /media/data/Container/RFdiffusionAA/rf_se3_diffusion.sif python3.9 diffuse.py --config config.yml
+singularity exec --nv /media/data/Container/RFdiffusionAA/rfdiffusion.sif python3.9 diffuse.py --config config.yml
 # RFdiffusion all-atom
-singularity exec --nv /media/data/Container/RFdiffusion/rfdiffusion.sif python3.9 diffuse.py --config config.yml        
+singularity exec --nv /media/data/Container/RFdiffusion/rf_se3_diffusion.sif python3.9 diffuse.py --config config.yml        
 ```
 
 ### Run sequence design
