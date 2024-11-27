@@ -69,13 +69,13 @@ def get_ca_rmsd(design_path, ref_path):
 # Get Ca motif RMSD
 def get_motif_ca_rmsd(design_path, ref_path, design_motif, ref_motif):
     parser=PDBParser(QUIET=True)
-    ref_chain = ref_motif[0][0]
     design_structure = parser.get_structure('design', design_path)[0]['A']
-    ref_structure = parser.get_structure('ref', ref_path)[0][ref_chain]
+    ref_model = parser.get_structure('ref', ref_path)[0]
     ref_atoms = []
     design_atoms = []
     for resi in ref_motif:
-        ref_atom_list = [atom for atom in ref_structure[int(resi[1:])].get_atoms() if atom.get_id() == 'CA']
+        ref_chain = resi[0]
+        ref_atom_list = [atom for atom in ref_model[ref_chain][int(resi[1:])].get_atoms() if atom.get_id() == 'CA']
         ref_atoms.extend(ref_atom_list)
     for resi in design_motif:
         design_atom_list = [atom for atom in design_structure[int(resi[1:])].get_atoms() if atom.get_id() == 'CA']
@@ -86,7 +86,6 @@ def get_motif_ca_rmsd(design_path, ref_path, design_motif, ref_motif):
 
 # Superimpose based on all-atom motif
 def superimpose_motif_all_atom(design_model, ref_model, design_motif, ref_motif, apply_change):
-    ref_chain = ref_motif[0][0]
     design_structure = design_model['A']
     ref_atoms = []
     design_atoms = []
