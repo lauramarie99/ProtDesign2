@@ -36,7 +36,7 @@ def get_motifs(contig_str):
             while i < diff:
                 idx += 1
                 ref_motif.append(block[0] + str(lb+i))
-                design_motif.append(block[0] + str(idx))
+                design_motif.append("A" + str(idx))
                 i += 1
         else:
             idx = idx + int(block.split("-")[0])
