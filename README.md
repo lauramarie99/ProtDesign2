@@ -42,7 +42,7 @@ git submodule update
 ```
 
 ### LigandMPNN/ProteinMPNN
-- Clone official repo
+- Clone LigandMPNN repo: https://github.com/lauramarie99/LigandMPNN
 - Use LigandMPNN_Rosetta_dockerfile to build a singularity/docker container
 - Get weights
 ```
