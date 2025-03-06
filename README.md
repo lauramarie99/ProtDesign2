@@ -15,7 +15,7 @@ Create new proteins such as enzymes or small-molecule binders.
 
 ### RFdiffusion
 - Use RFdiffusion_dockerfile to build a singularity/docker container
-- Clone official repo
+- Clone repo: https://github.com/lauramarie99/RFdiffusion
 - Get weights
 ```
 cd RFdiffusion
